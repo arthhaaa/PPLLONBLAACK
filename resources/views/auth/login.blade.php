@@ -152,7 +152,7 @@
                             </div>
                         @endif
 
-                        <form action="{{ url('login') }}" method="POST">
+                        <form action="{{ route('login') }}" method="POST">
                             @csrf
                             <div class="form-group">
                                 <input type="text" name="username" class="form-control" placeholder="Username" required>
