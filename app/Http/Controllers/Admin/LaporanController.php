@@ -9,7 +9,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use ZipArchive;
 
 class LaporanController extends Controller
 {
@@ -23,11 +22,11 @@ class LaporanController extends Controller
     public function export(Request $request): BinaryFileResponse
     {
         $report = $this->buildReport($request);
-        $filename = 'laporan-keuangan-' . now()->format('Ymd-His') . '.xlsx';
-        $path = $this->createXlsxFile($this->exportRows($report));
+        $filename = 'laporan-keuangan-' . now()->format('Ymd-His') . '.xls';
+        $path = $this->createExcelHtmlFile($this->exportRows($report));
 
         return response()->download($path, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
         ])->deleteFileAfterSend(true);
     }
 
@@ -76,113 +75,32 @@ class LaporanController extends Controller
         return $rows;
     }
 
-    private function createXlsxFile(array $rows): string
+    private function createExcelHtmlFile(array $rows): string
     {
         $path = tempnam(storage_path('app'), 'laporan-');
-        $zip = new ZipArchive();
-        $zip->open($path, ZipArchive::OVERWRITE);
+        $html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+            . '<style>table{border-collapse:collapse}td,th{border:1px solid #999;padding:6px}th{background:#eee}</style>'
+            . '</head><body><table>';
 
-        $zip->addFromString('[Content_Types].xml', $this->contentTypesXml());
-        $zip->addFromString('_rels/.rels', $this->relationshipsXml());
-        $zip->addFromString('xl/workbook.xml', $this->workbookXml());
-        $zip->addFromString('xl/_rels/workbook.xml.rels', $this->workbookRelationshipsXml());
-        $zip->addFromString('xl/styles.xml', $this->stylesXml());
-        $zip->addFromString('xl/worksheets/sheet1.xml', $this->worksheetXml($rows));
-        $zip->close();
+        foreach ($rows as $row) {
+            $html .= '<tr>';
+
+            foreach ($row as $value) {
+                $html .= '<td>' . $this->html($value) . '</td>';
+            }
+
+            $html .= '</tr>';
+        }
+
+        $html .= '</table></body></html>';
+        file_put_contents($path, $html);
 
         return $path;
     }
 
-    private function worksheetXml(array $rows): string
+    private function html(mixed $value): string
     {
-        $sheetRows = '';
-
-        foreach ($rows as $rowIndex => $row) {
-            $cellXml = '';
-
-            foreach (array_values($row) as $columnIndex => $value) {
-                $cellRef = $this->columnName($columnIndex + 1) . ($rowIndex + 1);
-                $cellXml .= is_numeric($value)
-                    ? '<c r="' . $cellRef . '" t="n"><v>' . $value . '</v></c>'
-                    : '<c r="' . $cellRef . '" t="inlineStr"><is><t>' . $this->xml($value) . '</t></is></c>';
-            }
-
-            $sheetRows .= '<row r="' . ($rowIndex + 1) . '">' . $cellXml . '</row>';
-        }
-
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-            . '<cols><col min="1" max="1" width="24" customWidth="1"/><col min="2" max="6" width="18" customWidth="1"/></cols>'
-            . '<sheetData>' . $sheetRows . '</sheetData>'
-            . '</worksheet>';
-    }
-
-    private function columnName(int $column): string
-    {
-        $name = '';
-
-        while ($column > 0) {
-            $column--;
-            $name = chr(65 + ($column % 26)) . $name;
-            $column = intdiv($column, 26);
-        }
-
-        return $name;
-    }
-
-    private function xml(mixed $value): string
-    {
-        return htmlspecialchars((string) $value, ENT_QUOTES | ENT_XML1, 'UTF-8');
-    }
-
-    private function contentTypesXml(): string
-    {
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-            . '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-            . '<Default Extension="xml" ContentType="application/xml"/>'
-            . '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
-            . '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
-            . '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
-            . '</Types>';
-    }
-
-    private function relationshipsXml(): string
-    {
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
-            . '</Relationships>';
-    }
-
-    private function workbookXml(): string
-    {
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
-            . '<sheets><sheet name="Laporan Keuangan" sheetId="1" r:id="rId1"/></sheets>'
-            . '</workbook>';
-    }
-
-    private function workbookRelationshipsXml(): string
-    {
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
-            . '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
-            . '</Relationships>';
-    }
-
-    private function stylesXml(): string
-    {
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-            . '<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>'
-            . '<fills count="1"><fill><patternFill patternType="none"/></fill></fills>'
-            . '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
-            . '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-            . '<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>'
-            . '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
-            . '</styleSheet>';
+        return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
     private function buildReport(Request $request): array
