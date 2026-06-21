@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
     // Redirect otomatis ke login kalau belum login
     $middleware->redirectGuestsTo(fn () => route('login'));
 
+    // Railway terminates HTTPS at the proxy, so Laravel must trust forwarded
+    // headers to generate HTTPS asset URLs and keep session redirects stable.
+    $middleware->trustProxies(at: '*');
+
     // Middleware Alias
     $middleware->alias([
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
