@@ -16,7 +16,7 @@ class BrandingEdukasiController extends Controller
      */
     public function index()
     {
-        $brandings = BrandingEdukasi::orderBy('urutan')->latest()->paginate(10);
+        $brandings = BrandingEdukasi::latest()->paginate(10);
         return view('admin.branding.index', compact('brandings'));
     }
 
@@ -45,7 +45,6 @@ class BrandingEdukasiController extends Controller
             'link_konten'  => 'nullable|url|max:500',
             'tampil_di'    => 'required|in:guest,customer,both',
             'is_active'    => 'nullable|boolean',
-            'urutan'       => 'nullable|integer|min:0|max:999',
         ]);
 
         $data = $request->only([
@@ -56,7 +55,6 @@ class BrandingEdukasiController extends Controller
             'video_konten',
             'link_konten',
             'tampil_di',
-            'urutan',
         ]);
         $data['username'] = Auth::user()->username;
         $data['is_active'] = $request->boolean('is_active');
@@ -90,14 +88,13 @@ class BrandingEdukasiController extends Controller
     public function livePreview()
     {
         return $this->renderHomepagePreview(
-            BrandingEdukasi::orderBy('urutan')->latest()->first()
+            BrandingEdukasi::latest()->first()
         );
     }
 
     private function renderHomepagePreview(?BrandingEdukasi $branding = null)
     {
         $homepageBrandings = BrandingEdukasi::active()
-            ->orderBy('urutan')
             ->latest()
             ->get();
         $featuredProducts = DataProduk::latest()->take(8)->get();
@@ -126,7 +123,6 @@ class BrandingEdukasiController extends Controller
             'link_konten'  => 'nullable|url|max:500',
             'tampil_di'    => 'required|in:guest,customer,both',
             'is_active'    => 'nullable|boolean',
-            'urutan'       => 'nullable|integer|min:0|max:999',
         ]);
 
         $data = $request->only([
@@ -137,7 +133,6 @@ class BrandingEdukasiController extends Controller
             'video_konten',
             'link_konten',
             'tampil_di',
-            'urutan',
         ]);
         $data['is_active'] = $request->boolean('is_active');
 

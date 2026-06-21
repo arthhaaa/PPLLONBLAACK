@@ -1,17 +1,16 @@
 <!-- Admin Sidebar -->
 <div class="admin-sidebar">
     
-    <div class="p-4 border-bottom border-light border-opacity-10">
+    <div class="admin-sidebar-brand p-4 border-bottom border-light border-opacity-10">
         <a href="{{ url('/admin/dashboard') }}" class="d-flex align-items-center text-decoration-none">
-            <img src="{{ asset('img/fav.png') }}" class="admin-sidebar-logo" alt="Long Black">
+            <img src="{{ asset('img/long-black-logo.png') }}" class="admin-sidebar-logo" alt="Long Black">
             <div class="ms-3">
                 <h5 class="mb-0 text-white fw-bold">LONG BLACK</h5>
-                <small class="opacity-75">Dashboard Admin Bolo</small>
             </div>
         </a>
     </div>
 
-    <div class="p-3">
+    <div class="admin-sidebar-menu p-3">
         <ul class="nav flex-column">
 
             <li class="nav-item">
@@ -88,7 +87,7 @@
     </div>
 
 <!-- Logout Section -->
-    <div class="position-absolute bottom-0 w-100 p-4 border-top border-light border-opacity-10">
+    <div class="admin-sidebar-footer p-4 border-top border-light border-opacity-10">
         <div class="d-flex align-items-center">
             <div class="flex-grow-1">
                 <small class="opacity-75">Logged in as</small><br>

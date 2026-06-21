@@ -6,7 +6,7 @@
 
                 <!-- Logo -->
                 <a class="navbar-brand logo_h" href="{{ auth()->check() ? (auth()->user()->role === 'admin' ? route('admin.dashboard') : route('customer.home')) : route('home') }}">
-                    <img src="{{ asset('img/logo.png') }}" alt="Long Black" style="width: 155px; height: auto;">
+                    <img src="{{ asset('img/long-black-logo.png') }}" alt="Long Black" class="site-brand-logo">
                 </a>
 
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#longblackMainNav"

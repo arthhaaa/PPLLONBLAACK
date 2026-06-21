@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\BiayaOperasionalController;
 use App\Http\Controllers\Admin\LaporanController;
+use App\Http\Controllers\MidtransWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,10 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name
 // Logout
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+// Midtrans memanggil endpoint ini langsung, tanpa sesi login pengguna.
+Route::post('/midtrans/webhook', MidtransWebhookController::class)
+    ->name('midtrans.webhook');
+
 // ====================== CUSTOMER ROUTES ======================
 Route::middleware('auth')
      ->prefix('customer')
@@ -59,6 +64,7 @@ Route::middleware('auth')
     Route::get('/orders/{kodeTransaksi}', [CustomerController::class, 'showOrder'])->name('orders.show');
     Route::put('/orders/{kodeTransaksi}', [CustomerController::class, 'updateOrder'])->name('orders.update');
     Route::post('/orders/{kodeTransaksi}/cancel', [CustomerController::class, 'cancelOrder'])->name('orders.cancel');
+    Route::delete('/orders/{kodeTransaksi}', [CustomerController::class, 'hideOrder'])->name('orders.destroy');
     Route::get('/tracking', [CustomerController::class, 'tracking'])->name('tracking');
 
     // Cart Routes

@@ -12,12 +12,14 @@ class ProductController extends Controller
     public function index()
     {
         $products = DataProduk::latest()->paginate(10);
+        $availableCount = DataProduk::whereRaw('CAST(stok_produk AS UNSIGNED) > 0')->count();
+        $lowStockCount = DataProduk::whereRaw('CAST(stok_produk AS UNSIGNED) BETWEEN 1 AND 10')->count();
         $trashedProducts = DataProduk::onlyTrashed()
             ->latest('deleted_at')
             ->paginate(8, ['*'], 'terhapus');
         $trashedCount = DataProduk::onlyTrashed()->count();
 
-        return view('admin.produk.index', compact('products', 'trashedProducts', 'trashedCount'));
+        return view('admin.produk.index', compact('products', 'availableCount', 'lowStockCount', 'trashedProducts', 'trashedCount'));
     }
 
     public function create()

@@ -15,13 +15,10 @@ class CustomerController extends Controller
     public function home()
     {   
         $user = Auth::user();
-        // Ambil beberapa produk terbaru dari model DataProduk
         $latestProducts = DataProduk::latest()->take(8)->get();
-        // Ambil produk untuk ditampilkan di home
         $popularProducts = DataProduk::latest()->take(4)->get();
         $homepageBrandings = BrandingEdukasi::active()
             ->visibleFor('customer')
-            ->orderBy('urutan')
             ->latest()
             ->take(12)
             ->get();
@@ -60,8 +57,7 @@ class CustomerController extends Controller
         } elseif ($request->stock === 'empty') {
             $query->whereRaw('CAST(stok_produk AS UNSIGNED) <= 0');
         }
-        
-        // Sorting - Sesuaikan dengan filter di view
+
         if ($request->has('sort')) {
             switch ($request->sort) {
                 case 'termurah':
@@ -101,8 +97,6 @@ class CustomerController extends Controller
                                      ->latest()
                                      ->limit(4)
                                      ->get();
-        
-        // ✅ PERBAIKAN 2: customer.produk.show (bukan customer.products.show)
         return view('customer.produk.show', compact('user', 'product', 'relatedProducts'));
     }
 
@@ -140,7 +134,11 @@ class CustomerController extends Controller
     {
         $user = Auth::user();
         $transactions = $this->paginatedTransactions(
-            Pemesanan::with('produk')->forUser($user)->latest()->get()
+            Pemesanan::with('produk')
+                ->forUser($user)
+                ->whereNull('customer_hidden_at')
+                ->latest()
+                ->get()
         );
 
         return view('customer.orders', compact('user', 'transactions'));
@@ -207,11 +205,33 @@ class CustomerController extends Controller
             ->with('success', 'Transaksi berhasil dibatalkan.');
     }
 
+    public function hideOrder(string $kodeTransaksi)
+    {
+        $user = Auth::user();
+        $items = $this->transactionItems($user, $kodeTransaksi);
+
+        abort_if($items->isEmpty(), 404);
+
+        if (! $items->every(fn ($item) => $item->canBeHiddenByCustomer())) {
+            return back()->with('error', 'Pesanan aktif belum bisa dihapus dari riwayat.');
+        }
+
+        Pemesanan::whereIn('id_pesanan', $items->pluck('id_pesanan'))->update([
+            'customer_hidden_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('customer.orders')
+            ->with('success', 'Pesanan berhasil dihapus dari tampilan pelanggan.');
+    }
+
     public function tracking()
     {
         $user = Auth::user();
+
         $activeTransactions = Pemesanan::forUser($user)
             ->with('produk')
+            ->whereNull('customer_hidden_at')
             ->whereNotIn('status_transaksi', ['selesai', 'dibatalkan'])
             ->latest()
             ->get()
@@ -219,20 +239,13 @@ class CustomerController extends Controller
             ->map(fn ($items) => $this->summarizeTransaction($items))
             ->values();
 
-        $historyTransactions = Pemesanan::forUser($user)
-            ->with('produk')
-            ->whereIn('status_transaksi', ['selesai', 'dibatalkan'])
-            ->latest()
-            ->get()
-            ->groupBy(fn ($order) => $order->kode_transaksi ?: 'ORDER-' . $order->id_pesanan)
-            ->map(fn ($items) => $this->summarizeTransaction($items))
-            ->values();
-
-        return view('customer.tracking', compact('user', 'activeTransactions', 'historyTransactions'));
+        return view('customer.tracking', compact('user', 'activeTransactions'));
     }
 
     private function paginatedTransactions($orders): LengthAwarePaginator
     {
+        $orders = collect($orders);
+
         $transactions = $orders
             ->groupBy(fn ($order) => $order->kode_transaksi ?: 'ORDER-' . $order->id_pesanan)
             ->map(fn ($items) => $this->summarizeTransaction($items))
@@ -277,7 +290,10 @@ class CustomerController extends Controller
 
     private function transactionItems($user, string $kodeTransaksi)
     {
-        $query = Pemesanan::with('produk')->forUser($user)->oldest();
+        $query = Pemesanan::with('produk')
+            ->forUser($user)
+            ->whereNull('customer_hidden_at')
+            ->oldest();
 
         if (str_starts_with($kodeTransaksi, 'ORDER-')) {
             return $query->where('id_pesanan', (int) str_replace('ORDER-', '', $kodeTransaksi))->get();

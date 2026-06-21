@@ -8505,7 +8505,7 @@ label {
 
 .admin-main {
     margin-left: 260px;
-    padding-top: 85px;
+    padding-top: 24px;
     background: #FFF8F0;
     min-height: 100vh;
 }
@@ -8516,18 +8516,45 @@ label {
     left: 0;
     width: 260px;
     height: 100vh;
+    display: flex;
+    flex-direction: column;
     background: #4B2E2B;
     color: #FFF8F0;
     z-index: 1000;
-    overflow-y: auto;
+    overflow: hidden;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     scrollbar-width: thin;
     scrollbar-color: #C08552 #4B2E2B;
 }
 
+.admin-sidebar-brand,
+.admin-sidebar-footer {
+    flex: 0 0 auto;
+}
+
+.admin-sidebar-menu {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #C08552 #4B2E2B;
+}
+
+.admin-sidebar-footer {
+    background: #4B2E2B;
+}
+
 .admin-sidebar-logo {
-    width: 48px;
-    height: auto;
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+}
+
+.header_area .navbar .navbar-brand img.site-brand-logo {
+    width: 58px !important;
+    height: 58px;
+    object-fit: contain;
 }
 
 .admin-sidebar .nav-link {
@@ -8638,6 +8665,68 @@ label {
     background: #198754;
     color: #ffffff;
     margin-right: 10px;
+}
+
+.admin-validation-alert {
+    display: flex;
+    gap: 14px;
+    margin: 0 24px 22px;
+    padding: 18px 20px;
+    border: 1px solid rgba(217, 119, 6, 0.28);
+    border-left: 5px solid #d97706;
+    border-radius: 8px;
+    background: #fff8eb;
+    color: #4b2e2b;
+    box-shadow: 0 12px 28px rgba(75, 46, 43, 0.08);
+}
+
+.admin-validation-alert__icon {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #d97706;
+    color: #ffffff;
+}
+
+.admin-validation-alert strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.admin-validation-alert p {
+    margin: 0 0 8px;
+    color: #735d50;
+}
+
+.admin-validation-alert ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.admin-client-validation-alert {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 1090;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(420px, calc(100vw - 32px));
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #4b2e2b;
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 16px 40px rgba(75, 46, 43, 0.22);
+}
+
+.admin-client-validation-alert[hidden] {
+    display: none;
 }
 
 .admin-confirm-modal .modal-content {
@@ -9610,6 +9699,11 @@ label {
         position: relative;
         width: 100%;
         height: auto;
+        overflow: visible;
+    }
+
+    .admin-sidebar-menu {
+        overflow: visible;
     }
 
     .admin-sidebar-submenu {

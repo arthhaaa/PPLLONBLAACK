@@ -34,11 +34,13 @@ class Pemesanan extends Model
         'payment_response',
         'dibatalkan_pada',
         'dibayar_pada',
+        'customer_hidden_at'=>'datetime',
     ];
 
     protected $casts = [
         'dibatalkan_pada' => 'datetime',
         'dibayar_pada' => 'datetime',
+        'customer_hidden_at' => 'datetime',
         'payment_payload' => 'array',
         'payment_response' => 'array',
     ];
@@ -60,4 +62,10 @@ class Pemesanan extends Model
     {
         return in_array($this->status_transaksi, ['pending', 'menunggu_pembayaran'], true);
     }
+
+    public function canBeHiddenByCustomer(): bool
+    {
+        return in_array($this->status_transaksi, ['selesai', 'dibatalkan'], true);
+    }
+    
 }

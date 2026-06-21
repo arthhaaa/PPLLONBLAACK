@@ -32,7 +32,6 @@ class BrandingEdukasi extends Model
         'link_konten',
         'tampil_di',
         'is_active',
-        'urutan',
     ];
 
     protected $casts = [

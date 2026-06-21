@@ -21,6 +21,9 @@ class CartController extends Controller
 
     public function index()
     {
+        $cart = $this->normalizeCartQuantities(session('customer.cart', []));
+        session(['customer.cart' => $cart]);
+
         return view('customer.cart');
     }
 
@@ -32,26 +35,42 @@ class CartController extends Controller
         ]);
 
         $product = DataProduk::findOrFail($id);
+        $stock = (int) $product->stok_produk;
+
+        if ($stock <= 0) {
+            return redirect()->back()->with('error', 'Stok produk sudah habis');
+        }
+
         $quantity = (int) $request->input('quantity', 1);
-        $quantity = max(1, min($quantity, (int) $product->stok_produk));
         $bentukProduk = $request->input('bentuk_produk');
         $cartKey = $product->id_produk . '-' . $bentukProduk;
 
         $cart = session('customer.cart', []);
+        $otherCartQty = $this->cartProductQuantity($cart, (int) $product->id_produk, $cartKey);
+        $availableQty = max(0, $stock - $otherCartQty);
+
+        if ($availableQty <= 0) {
+            return redirect()->back()->with('error', 'Jumlah produk di keranjang sudah mencapai stok tersedia');
+        }
+
+        $quantity = max(1, min($quantity, $availableQty));
 
         if (isset($cart[$cartKey])) {
-            $cart[$cartKey]['qty'] = min($cart[$cartKey]['qty'] + $quantity, (int) $product->stok_produk);
+            $cart[$cartKey]['qty'] = min((int) $cart[$cartKey]['qty'] + $quantity, $availableQty);
+            $cart[$cartKey]['stock'] = $stock;
         } else {
             $cart[$cartKey] = [
                 'id_produk' => $product->id_produk,
                 'name' => $product->nama_produk,
                 'price' => (int) $product->harga_produk,
                 'qty' => $quantity,
+                'stock' => $stock,
                 'bentuk_produk' => $bentukProduk,
                 'image' => $product->gambar_produk,
             ];
         }
 
+        $cart = $this->normalizeCartQuantities($cart);
         session(['customer.cart' => $cart]);
 
         return redirect()->back()->with('success', 'Produk berhasil ditambahkan ke keranjang');
@@ -73,15 +92,7 @@ class CartController extends Controller
             'quantities.*' => 'integer|min:1',
         ]);
 
-        $cart = session('customer.cart', []);
-
-        foreach ($request->input('quantities', []) as $key => $quantity) {
-            if (isset($cart[$key])) {
-                $product = DataProduk::find($cart[$key]['id_produk']);
-                $maxStock = $product ? (int) $product->stok_produk : (int) $quantity;
-                $cart[$key]['qty'] = max(1, min((int) $quantity, $maxStock));
-            }
-        }
+        $cart = $this->cartWithRequestedQuantities($request);
 
         session(['customer.cart' => $cart]);
 
@@ -300,12 +311,54 @@ class CartController extends Controller
 
         foreach ($request->input('quantities', []) as $key => $quantity) {
             if (isset($cart[$key])) {
-                $product = DataProduk::find($cart[$key]['id_produk']);
-                $maxStock = $product ? (int) $product->stok_produk : (int) $quantity;
-                $cart[$key]['qty'] = max(1, min((int) $quantity, $maxStock));
+                $cart[$key]['qty'] = max(1, (int) $quantity);
             }
         }
 
+        return $this->normalizeCartQuantities($cart);
+    }
+
+    private function normalizeCartQuantities(array $cart): array
+    {
+        $usedByProduct = [];
+
+        foreach ($cart as $key => $item) {
+            $productId = (int) ($item['id_produk'] ?? 0);
+            $product = $productId > 0 ? DataProduk::find($productId) : null;
+
+            if (! $product) {
+                unset($cart[$key]);
+                continue;
+            }
+
+            $stock = max(0, (int) $product->stok_produk);
+            $used = $usedByProduct[$productId] ?? 0;
+            $remaining = max(0, $stock - $used);
+            $qty = min(max(1, (int) ($item['qty'] ?? 1)), $remaining);
+
+            if ($stock <= 0 || $qty <= 0) {
+                unset($cart[$key]);
+                continue;
+            }
+
+            $cart[$key]['name'] = $product->nama_produk;
+            $cart[$key]['price'] = (int) $product->harga_produk;
+            $cart[$key]['image'] = $product->gambar_produk;
+            $cart[$key]['stock'] = $stock;
+            $cart[$key]['qty'] = $qty;
+            $cart[$key]['max_qty'] = $remaining;
+
+            $usedByProduct[$productId] = $used + $qty;
+        }
+
         return $cart;
+    }
+
+    private function cartProductQuantity(array $cart, int $productId, ?string $exceptKey = null): int
+    {
+        return collect($cart)
+            ->reject(fn ($item, $key) => $exceptKey !== null && $key === $exceptKey)
+            ->filter(fn ($item) => (int) ($item['id_produk'] ?? 0) === $productId)
+            ->sum(fn ($item) => (int) ($item['qty'] ?? 0));
     }
 }

@@ -21,19 +21,52 @@ class ForgotPasswordController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
+            'reset_delivery' => 'nullable|in:direct,mailtrap',
         ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => 'Email tidak ditemukan. Pastikan email sudah terdaftar.']);
+        }
+
+        $delivery = $request->input('reset_delivery', 'direct');
+
+        if (! app()->environment('production') && $delivery === 'direct') {
+            $token = Password::broker()->createToken($user);
+            $resetLink = route('password.reset', [
+                'token' => $token,
+                'email' => $user->email,
+            ]);
+
+            return back()
+                ->withInput($request->only('email'))
+                ->with('status', 'Link reset password dibuat untuk testing.')
+                ->with('reset_link', $resetLink);
+        }
 
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
         if ($status === Password::RESET_LINK_SENT) {
-            return back()->with('status', 'Link reset password sudah dikirim. Buka Mailpit di localhost:8025 untuk melihat emailnya.');
+            if (! app()->environment('production') && $delivery === 'mailtrap') {
+                return redirect()->away($this->mailtrapInboxUrl());
+            }
+
+            return back()->with('status', 'Link reset password sudah dikirim. Silakan cek email kamu.');
         }
 
         return back()
             ->withInput($request->only('email'))
             ->withErrors(['email' => 'Email tidak ditemukan. Pastikan email sudah terdaftar.']);
+    }
+
+    private function mailtrapInboxUrl(): string
+    {
+        return env('MAILTRAP_INBOX_URL', 'https://mailtrap.io/inboxes');
     }
     
     public function showResetForm(Request $request, string $token)

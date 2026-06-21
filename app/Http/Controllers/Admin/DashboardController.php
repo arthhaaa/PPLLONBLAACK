@@ -39,7 +39,7 @@ class DashboardController extends Controller
         $pelangganBaru = User::where('role', 'user')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->count();
-        $stokRendah = DataProduk::whereRaw('CAST(stok_produk AS UNSIGNED) <= 10')->count();
+        $stokRendah = DataProduk::whereRaw('CAST(stok_produk AS UNSIGNED) BETWEEN 1 AND 10')->count();
 
         $salesByDate = (clone $paidOrders)
             ->selectRaw('DATE(created_at) as tanggal, SUM(total_harga_produk) as total')
@@ -76,7 +76,7 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $lowStockProducts = DataProduk::whereRaw('CAST(stok_produk AS UNSIGNED) <= 10')
+        $lowStockProducts = DataProduk::whereRaw('CAST(stok_produk AS UNSIGNED) BETWEEN 1 AND 10')
             ->orderByRaw('CAST(stok_produk AS UNSIGNED) ASC')
             ->take(5)
             ->get();
