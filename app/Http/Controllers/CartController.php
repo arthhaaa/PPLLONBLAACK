@@ -7,8 +7,10 @@ use App\Services\RajaOngkirService;
 use App\Models\DataProduk;
 use App\Models\Pemesanan;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CartController extends Controller
@@ -264,32 +266,41 @@ class CartController extends Controller
                 ->with('error', 'Gagal membuat pembayaran QRIS Midtrans: ' . ($exception->response?->json('status_message') ?: $exception->getMessage()));
         }
 
-        foreach ($selectedCart as $item) {
-            $itemSubtotal = (int) $item['price'] * (int) $item['qty'];
-            Pemesanan::create([
-                'user_id' => $user->id,
-                'kode_transaksi' => $kodeTransaksi,
-                'id_produk' => $item['id_produk'],
-                'username' => $user->username ?? $user->name,
-                'nama_produk' => $item['name'],
-                'bentuk_produk' => $item['bentuk_produk'] ?? 'biji',
-                'metode_pembayaran' => $request->metode_pembayaran,
-                'status_transaksi' => 'menunggu_pembayaran',
-                'alamat_pengiriman' => $request->alamat_pengiriman,
-                'catatan' => $request->catatan,
-                'total_harga_produk' => $itemSubtotal,
-                'total_produk' => (int) $item['qty'],
-                'subtotal_produk' => $productSubtotal,
-                'ongkir' => $shippingCost,
-                'kurir' => $request->courier,
-                'layanan_kurir' => $request->shipping_service,
-                'destination_city_id' => $request->destination_city_id,
-                'midtrans_order_id' => $kodeTransaksi,
-                'midtrans_transaction_id' => $charge['transaction_id'],
-                'qris_url' => $charge['qr_url'],
-                'payment_payload' => $charge['payload'],
-                'payment_response' => $charge['response'],
-            ]);
+        try {
+            DB::transaction(function () use ($selectedCart, $user, $kodeTransaksi, $request, $productSubtotal, $shippingCost, $charge) {
+                foreach ($selectedCart as $item) {
+                    $itemSubtotal = (int) $item['price'] * (int) $item['qty'];
+                    Pemesanan::create([
+                        'user_id' => $user->id,
+                        'kode_transaksi' => $kodeTransaksi,
+                        'id_produk' => $item['id_produk'],
+                        'username' => $user->username ?? $user->name,
+                        'nama_produk' => $item['name'],
+                        'bentuk_produk' => $item['bentuk_produk'] ?? 'biji',
+                        'metode_pembayaran' => $request->metode_pembayaran,
+                        'status_transaksi' => 'menunggu_pembayaran',
+                        'alamat_pengiriman' => $request->alamat_pengiriman,
+                        'catatan' => $request->catatan,
+                        'total_harga_produk' => $itemSubtotal,
+                        'total_produk' => (int) $item['qty'],
+                        'subtotal_produk' => $productSubtotal,
+                        'ongkir' => $shippingCost,
+                        'kurir' => $request->courier,
+                        'layanan_kurir' => $request->shipping_service,
+                        'destination_city_id' => $request->destination_city_id,
+                        'midtrans_order_id' => $kodeTransaksi,
+                        'midtrans_transaction_id' => $charge['transaction_id'],
+                        'qris_url' => $charge['qr_url'],
+                        'payment_payload' => $charge['payload'],
+                        'payment_response' => $charge['response'],
+                    ]);
+                }
+            });
+        } catch (QueryException $exception) {
+            session(['customer.cart' => $this->normalizeCartQuantities($cart)]);
+
+            return redirect()->route('customer.cart')
+                ->with('error', $this->checkoutStockErrorMessage($exception));
         }
 
         $remainingCart = array_diff_key($cart, $selectedCart);
@@ -360,5 +371,20 @@ class CartController extends Controller
             ->reject(fn ($item, $key) => $exceptKey !== null && $key === $exceptKey)
             ->filter(fn ($item) => (int) ($item['id_produk'] ?? 0) === $productId)
             ->sum(fn ($item) => (int) ($item['qty'] ?? 0));
+    }
+
+    private function checkoutStockErrorMessage(QueryException $exception): string
+    {
+        $message = $exception->getMessage();
+
+        if (str_contains($message, 'Stok produk tidak mencukupi')) {
+            return 'Stok produk tidak mencukupi. Silakan perbarui keranjang sesuai stok terbaru.';
+        }
+
+        if (str_contains($message, 'Produk pesanan tidak ditemukan')) {
+            return 'Produk pesanan tidak ditemukan. Silakan perbarui keranjang.';
+        }
+
+        return 'Checkout gagal diproses. Silakan coba lagi.';
     }
 }
