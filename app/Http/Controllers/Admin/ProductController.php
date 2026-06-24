@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DataProduk;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -29,12 +30,23 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'nama_produk' => trim((string) $request->input('nama_produk')),
+        ]);
+
         $request->validate([
-            'nama_produk'      => 'required|string|max:255',
+            'nama_produk'      => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('data_produk', 'nama_produk')->whereNull('deleted_at'),
+            ],
             'deskripsi_produk' => 'required|string',
             'harga_produk'     => 'required|numeric|min:0',
             'stok_produk'      => 'required|integer|min:0',
             'gambar_produk'    => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'nama_produk.unique' => 'Nama produk sudah digunakan. Gunakan nama lain agar data produk tidak duplikat.',
         ]);
 
         $data = $request->except('gambar_produk');
@@ -61,12 +73,25 @@ class ProductController extends Controller
 
     public function update(Request $request, DataProduk $produk)
     {
+        $request->merge([
+            'nama_produk' => trim((string) $request->input('nama_produk')),
+        ]);
+
         $request->validate([
-            'nama_produk'      => 'required|string|max:255',
+            'nama_produk'      => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('data_produk', 'nama_produk')
+                    ->ignore($produk->id_produk, 'id_produk')
+                    ->whereNull('deleted_at'),
+            ],
             'deskripsi_produk' => 'required|string',
             'harga_produk'     => 'required|numeric|min:0',
             'stok_produk'      => 'required|integer|min:0',
             'gambar_produk'    => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'nama_produk.unique' => 'Nama produk sudah digunakan. Gunakan nama lain agar data produk tidak duplikat.',
         ]);
 
         $data = $request->except('gambar_produk');
@@ -96,6 +121,18 @@ class ProductController extends Controller
     public function restore($id)
     {
         $produk = DataProduk::onlyTrashed()->findOrFail($id);
+
+        $hasActiveDuplicate = DataProduk::where('nama_produk', $produk->nama_produk)
+            ->whereKeyNot($produk->id_produk)
+            ->exists();
+
+        if ($hasActiveDuplicate) {
+            return redirect()->route('admin.produk.index')
+                ->withErrors([
+                    'nama_produk' => 'Produk tidak bisa dipulihkan karena nama produk sudah digunakan oleh produk aktif.',
+                ]);
+        }
+
         $produk->restore();
 
         return redirect()->route('admin.produk.index')
