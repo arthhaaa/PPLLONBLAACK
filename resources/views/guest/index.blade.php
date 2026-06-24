@@ -133,7 +133,7 @@
 						<p>Send email</p>
 						<div class="" id="mc_embed_signup">
 
-							<form id="guestEmailForm" action="mailto:quarthayudha@gmail.com" method="get" class="form-inline">
+							<form id="guestEmailForm" action="https://mail.google.com/mail/" method="get" class="form-inline">
 
 								<div class="d-flex flex-row">
 
@@ -195,7 +195,7 @@
 			const subject = encodeURIComponent('Pesan dari website Long Black');
 			const body = encodeURIComponent('Halo Long Black,\n\nSaya ingin menghubungi Anda.\n\nEmail saya: ' + email);
 
-			window.location.href = 'mailto:quarthayudha@gmail.com?subject=' + subject + '&body=' + body;
+			window.location.href = 'https://mail.google.com/mail/?view=cm&fs=1&to=quarthayudha@gmail.com&su=' + subject + '&body=' + body;
 		});
 	</script>
 </body>
