@@ -16,7 +16,7 @@
         </div>
     </section>
 
-    <section class="product-archive">
+    <section class="product-archive" id="productArchiveAjax">
         <div class="container product-page-container">
             <div class="row">
                 <aside class="col-lg-3">
@@ -100,7 +100,7 @@
                                 @endif
                             @endforeach
                             <label for="sort">Sort by :</label>
-                            <select id="sort" name="sort" class="form-control" onchange="this.form.submit()">
+                            <select id="sort" name="sort" class="form-control">
                                 <option value="terbaru" {{ request('sort', 'terbaru') === 'terbaru' ? 'selected' : '' }}>Terbaru</option>
                                 <option value="termurah" {{ request('sort') === 'termurah' ? 'selected' : '' }}>Termurah</option>
                                 <option value="termahal" {{ request('sort') === 'termahal' ? 'selected' : '' }}>Termahal</option>
@@ -238,4 +238,111 @@
         </div>
     </section>
 </main>
+@endsection
+
+@section('scripts')
+<script>
+    (function () {
+        const archive = document.getElementById('productArchiveAjax');
+
+        if (!archive || !window.fetch || !window.DOMParser) {
+            return;
+        }
+
+        function buildUrl(form) {
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+
+            formData.forEach(function (value, key) {
+                if (value !== null && String(value).trim() !== '') {
+                    params.append(key, value);
+                }
+            });
+
+            const query = params.toString();
+            return form.action + (query ? '?' + query : '');
+        }
+
+        function replaceArchive(html, url, shouldPushState) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const nextArchive = doc.getElementById('productArchiveAjax');
+
+            if (!nextArchive) {
+                window.location.href = url;
+                return;
+            }
+
+            archive.innerHTML = nextArchive.innerHTML;
+
+            if (shouldPushState) {
+                window.history.pushState({ productAjax: true }, '', url);
+            }
+        }
+
+        function loadProducts(url, shouldPushState) {
+            archive.classList.add('is-loading');
+            archive.setAttribute('aria-busy', 'true');
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html'
+                }
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Gagal memuat data produk.');
+                    }
+
+                    return response.text();
+                })
+                .then(function (html) {
+                    replaceArchive(html, url, shouldPushState);
+                })
+                .catch(function () {
+                    window.location.href = url;
+                })
+                .finally(function () {
+                    archive.classList.remove('is-loading');
+                    archive.removeAttribute('aria-busy');
+                });
+        }
+
+        archive.addEventListener('submit', function (event) {
+            const form = event.target;
+
+            if (!(form instanceof HTMLFormElement) || (!form.classList.contains('product-filter') && !form.classList.contains('sort-form'))) {
+                return;
+            }
+
+            event.preventDefault();
+            loadProducts(buildUrl(form), true);
+        });
+
+        archive.addEventListener('change', function (event) {
+            const field = event.target;
+
+            if (!(field instanceof HTMLSelectElement) || !field.closest('.sort-form')) {
+                return;
+            }
+
+            loadProducts(buildUrl(field.form), true);
+        });
+
+        archive.addEventListener('click', function (event) {
+            const link = event.target.closest('.product-pagination a, .active-filter-row a, .filter-header a');
+
+            if (!link || !link.href) {
+                return;
+            }
+
+            event.preventDefault();
+            loadProducts(link.href, true);
+        });
+
+        window.addEventListener('popstate', function () {
+            loadProducts(window.location.href, false);
+        });
+    })();
+</script>
 @endsection

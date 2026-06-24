@@ -40,6 +40,17 @@ $(document).ready(function(){
         $('#search_input_box').slideUp(300);
     });
 
+    const stickyHeader = $(".sticky-header");
+    if (stickyHeader.length) {
+        const toggleHeaderAnimation = function () {
+            stickyHeader.toggleClass("is-scrolled", $(window).scrollTop() > 20);
+        };
+
+        toggleHeaderAnimation();
+        $(window).on("scroll", toggleHeaderAnimation);
+        $(window).on("resize", toggleHeaderAnimation);
+    }
+
     // Sticky Header
     if ($.fn.sticky) {
         $(".sticky-header").sticky();

@@ -6,6 +6,12 @@
 @endphp
 
 <section class="homepage-product-area section_gap">
+    <div class="homepage-product-decor" aria-hidden="true">
+        <span class="coffee-bean coffee-bean--five"></span>
+        <span class="coffee-bean coffee-bean--six"></span>
+        <span class="coffee-bean coffee-bean--seven"></span>
+    </div>
+
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-7 text-center">

@@ -10,6 +10,15 @@
 @endphp
 
 <section class="homepage-hero-profile">
+    <div class="homepage-floating-decor" aria-hidden="true">
+        <span class="coffee-bean coffee-bean--one"></span>
+        <span class="coffee-bean coffee-bean--two"></span>
+        <span class="coffee-bean coffee-bean--three"></span>
+        <span class="coffee-bean coffee-bean--four"></span>
+        <span class="coffee-steam coffee-steam--one"></span>
+        <span class="coffee-steam coffee-steam--two"></span>
+    </div>
+
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
@@ -22,6 +31,30 @@
             <div class="col-lg-6">
                 <div class="homepage-hero-media js-reveal">
                     <img src="{{ $heroImage }}" alt="{{ $heroTitle }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="homepage-profile-highlights js-reveal" aria-label="Keunggulan Long Black">
+            <div class="profile-highlight-card">
+                <span class="lnr lnr-home"></span>
+                <div>
+                    <strong>Rumah Produksi Kopi</strong>
+                    <p>Diolah dari proses yang rapi dan konsisten.</p>
+                </div>
+            </div>
+            <div class="profile-highlight-card">
+                <span class="lnr lnr-leaf"></span>
+                <div>
+                    <strong>Origin Argopuro</strong>
+                    <p>Karakter rasa khas lereng selatan Jember.</p>
+                </div>
+            </div>
+            <div class="profile-highlight-card">
+                <span class="lnr lnr-cup"></span>
+                <div>
+                    <strong>Fresh & Siap Seduh</strong>
+                    <p>Produk dipilih untuk pengalaman minum terbaik.</p>
                 </div>
             </div>
         </div>

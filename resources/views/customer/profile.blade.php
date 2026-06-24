@@ -130,10 +130,11 @@
                     </div>
                     <h4 id="fullNameSide">{{ Auth::user()->name ?? 'Nama Pengguna' }}</h4>
                     <p><i class="fa fa-map-marker"></i> <span id="addressSide">{{ Auth::user()->alamat ?? 'Belum diisi' }}</span></p>
-                    
-                    <button class="btn btn-outline-primary w-100 mt-3" id="editProfileBtn">
+
+                    <button type="button" class="btn btn-outline-primary w-100 mt-3" id="editProfileBtn">
                         <i class="fa fa-pencil"></i> Edit Profile
                     </button>
+                    
                     <form action="{{ route('logout') }}" method="POST" class="profile-logout-form js-logout-form">
                         @csrf
                         <button type="submit" class="profile-logout-btn">
@@ -169,11 +170,6 @@
                             <div class="info-value" id="displayAddress">{{ Auth::user()->alamat ?? 'Belum diisi' }}</div>
                         </div>
 
-                        <div class="text-end mt-4">
-                            <button class="btn btn-primary" id="editProfileBtn2">
-                            <i class="fa fa-edit"></i> Update Profile
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -181,45 +177,46 @@
     </section>
     <!--================End Profile Area =================-->
 
-    <!-- Modal for Editing Profile -->
-<div id="editModal" class="modal-overlay">
-    <div class="modal-container">
-        <span class="modal-close" id="closeModalBtn">&times;</span>
-        <h3 style="margin-bottom: 20px;">Edit Profile</h3>
-        
-        <form id="profileEditForm" method="POST" action="{{ route('customer.profile.update') }}">
-            @csrf
-            @method('PUT')
-            
-            <div class="form-group">
-                <label>Nama Lengkap</label>
-                <input type="text" name="name" class="form-control" value="{{ Auth::user()->name }}" required>
-            </div>
+    <div class="profile-modal-overlay" id="profileEditModal" aria-hidden="true">
+        <div class="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditTitle">
+            <button type="button" class="profile-modal-close" data-profile-close aria-label="Tutup">
+                <i class="fa fa-times"></i>
+            </button>
+            <h4 id="profileEditTitle" class="profile-form-title">Ubah Data Akun</h4>
+            <form id="profileEditForm" method="POST" action="{{ route('customer.profile.update') }}" class="profile-edit-form">
+                @csrf
+                @method('PUT')
 
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" name="username" class="form-control" value="{{ Auth::user()->username }}" required>
-            </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="profile-form-label">Nama Lengkap</label>
+                        <input type="text" name="name" class="form-control" value="{{ Auth::user()->name }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-form-label">Username</label>
+                        <input type="text" name="username" class="form-control" value="{{ Auth::user()->username }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-form-label">Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ Auth::user()->email }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="profile-form-label">No Telepon</label>
+                        <input type="text" name="telp" class="form-control" value="{{ Auth::user()->telp ?? '' }}" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="profile-form-label">Alamat</label>
+                        <textarea name="alamat" class="form-control" rows="3" required>{{ Auth::user()->alamat }}</textarea>
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" name="email" class="form-control" value="{{ Auth::user()->email }}" required>
-            </div>
-
-            <div class="form-group">
-                <label>No Telepon</label>
-                <input type="text" name="telp" class="form-control" value="{{ Auth::user()->telp ?? '' }}" required>
-            </div>
-
-            <div class="form-group">
-                <label>Alamat</label>
-                <textarea name="alamat" class="form-control" rows="3" required>{{ Auth::user()->alamat }}</textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100">Simpan Perubahan</button>
-        </form>
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary profile-submit-btn">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
+
     <!-- Toast notification -->
     <div id="toastMsg" class="toast-notif">
         <i class="fa fa-check-circle"></i> Profile updated successfully!
@@ -285,33 +282,23 @@
                 $('#displayAddress').text(userProfile.address);
             }
             
-            function openEditModal() {
-                $('#editFullName').val(userProfile.fullName);
-                $('#editUsername').val(userProfile.username);
-                $('#editEmail').val(userProfile.email);
-                $('#editPhone').val(userProfile.phone);
-                $('#editAddress').val(userProfile.address);
-                $('#editPassword').val('');
-                $('#editConfirmPassword').val('');
-                $('#editModal').fadeIn(200);
-            }
-            
-            function closeModal() {
-                $('#editModal').fadeOut(200);
-            }
-            
             function showToast(message) {
                 $('#toastMsg').text(message || 'Profile updated successfully!').fadeIn(300);
                 setTimeout(() => {
                     $('#toastMsg').fadeOut(300);
                 }, 2500);
             }
-            
-            $('#editProfileBtn, #editProfileBtn2').on('click', openEditModal);
-            $('#closeModalBtn').on('click', closeModal);
-            $(window).on('click', function(e) {
-                if ($(e.target).is('#editModal')) {
-                    closeModal();
+
+            $('#editProfileBtn, [data-profile-close]').on('click', function (e) {
+                e.stopPropagation();
+                $('#profileEditModal').toggleClass('is-visible').attr('aria-hidden', function (_, attr) {
+                    return attr === 'true' ? 'false' : 'true';
+                });
+            });
+
+            $('#profileEditModal').on('click', function (e) {
+                if ($(e.target).is('#profileEditModal')) {
+                    $(this).removeClass('is-visible').attr('aria-hidden', 'true');
                 }
             });
 

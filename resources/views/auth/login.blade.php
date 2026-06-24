@@ -30,7 +30,7 @@
         <link rel="stylesheet" href="{{ asset('css/customer-polish.css') }}">
     </head>
 
-    <body>
+    <body class="auth-page">
 
  <!-- Start Header Area -->
 <header class="header_area sticky-header">
@@ -93,7 +93,14 @@
 <!-- End Header Area -->
 
     <!-- Start Banner Area -->
-        <section class="banner-area">
+        <section class="banner-area auth-banner">
+        <div class="auth-banner-decor" aria-hidden="true">
+            <span class="coffee-bean auth-bean auth-bean--one"></span>
+            <span class="coffee-bean auth-bean auth-bean--two"></span>
+            <span class="coffee-bean auth-bean auth-bean--three"></span>
+            <span class="auth-steam auth-steam--one"></span>
+            <span class="auth-steam auth-steam--two"></span>
+        </div>
         <div class="container">
             <div class="row min-vh-100 align-items-center">
                 
@@ -120,6 +127,10 @@
 
     <!--================Login Box Area =================-->
     <section class="login_box_area section_gap">
+        <div class="auth-form-decor" aria-hidden="true">
+            <span class="coffee-bean auth-bean auth-bean--four"></span>
+            <span class="coffee-bean auth-bean auth-bean--five"></span>
+        </div>
         <div class="container">
             <div class="row" id="auth-container">
 
