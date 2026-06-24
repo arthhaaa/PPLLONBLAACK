@@ -156,6 +156,26 @@ class CustomerController extends Controller
         return view('customer.transaction-detail', compact('user', 'items', 'transaction'));
     }
 
+    public function invoice(string $kodeTransaksi)
+    {
+        $user = Auth::user();
+        $items = $this->transactionItems($user, $kodeTransaksi);
+
+        abort_if($items->isEmpty(), 404);
+
+        $transaction = $this->summarizeTransaction($items);
+
+        return view('invoices.receipt', [
+            'items' => $items,
+            'transaction' => $transaction,
+            'customerName' => $user->name ?? $user->username,
+            'customerEmail' => $user->email,
+            'customerPhone' => $user->telp,
+            'backUrl' => route('customer.orders.show', $transaction['kode_transaksi']),
+            'backLabel' => 'Kembali ke Detail',
+        ]);
+    }
+
     public function updateOrder(Request $request, string $kodeTransaksi)
     {
         $request->validate([

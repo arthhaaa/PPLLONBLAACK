@@ -127,6 +127,9 @@
                             <textarea name="catatan" id="catatan" class="form-control" rows="3" {{ $items->first()->canBeModified() ? '' : 'disabled' }}>{{ old('catatan', $transaction['catatan']) }}</textarea>
 
                             <div class="transaction-actions">
+                                <a href="{{ route('customer.orders.invoice', $transaction['kode_transaksi']) }}" target="_blank" class="btn btn-outline-secondary">
+                                    <i class="fa fa-receipt"></i> Cetak Struk
+                                </a>
                                 @if($items->first()->canBeModified())
                                     <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                                     <button type="submit" form="cancel-transaction" class="btn btn-outline-danger">

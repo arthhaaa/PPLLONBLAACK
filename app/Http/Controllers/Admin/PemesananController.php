@@ -79,4 +79,47 @@ class PemesananController extends Controller
 
         return back()->with('success', 'Status pesanan berhasil diperbarui.');
     }
+
+    public function invoice(Pemesanan $pesanan)
+    {
+        $items = Pemesanan::with('produk')
+            ->when(
+                $pesanan->kode_transaksi,
+                fn ($query) => $query->where('kode_transaksi', $pesanan->kode_transaksi),
+                fn ($query) => $query->where('id_pesanan', $pesanan->id_pesanan)
+            )
+            ->oldest()
+            ->get();
+
+        abort_if($items->isEmpty(), 404);
+
+        $first = $items->first();
+        $transaction = [
+            'kode_transaksi' => $first->kode_transaksi ?: 'ORDER-' . $first->id_pesanan,
+            'status_transaksi' => $first->status_transaksi ?? 'menunggu_pembayaran',
+            'metode_pembayaran' => $first->metode_pembayaran,
+            'alamat_pengiriman' => $first->alamat_pengiriman,
+            'catatan' => $first->catatan,
+            'ongkir' => (int) ($first->ongkir ?? 0),
+            'kurir' => $first->kurir,
+            'layanan_kurir' => $first->layanan_kurir,
+            'midtrans_order_id' => $first->midtrans_order_id,
+            'midtrans_transaction_id' => $first->midtrans_transaction_id,
+            'total_produk' => $items->sum('total_produk'),
+            'subtotal_produk' => $items->sum('total_harga_produk'),
+            'total_harga' => $items->sum('total_harga_produk') + (int) ($first->ongkir ?? 0),
+            'jumlah_item' => $items->count(),
+            'created_at' => $first->created_at,
+        ];
+
+        return view('invoices.receipt', [
+            'items' => $items,
+            'transaction' => $transaction,
+            'customerName' => $first->username,
+            'customerEmail' => null,
+            'customerPhone' => null,
+            'backUrl' => route('admin.pesanan.index'),
+            'backLabel' => 'Kembali ke Pesanan',
+        ]);
+    }
 }

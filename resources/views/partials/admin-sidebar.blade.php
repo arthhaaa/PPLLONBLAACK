@@ -1,5 +1,5 @@
 <!-- Admin Sidebar -->
-<div class="admin-sidebar">
+<div class="admin-sidebar" id="adminSidebar">
     
     <div class="admin-sidebar-brand p-4 border-bottom border-light border-opacity-10">
         <a href="{{ url('/admin/dashboard') }}" class="d-flex align-items-center text-decoration-none">
@@ -8,6 +8,9 @@
                 <h5 class="mb-0 text-white fw-bold">LONG BLACK</h5>
             </div>
         </a>
+        <button class="admin-sidebar-close" type="button" aria-label="Tutup menu admin" data-admin-sidebar-close>
+            <i class="fa fa-times"></i>
+        </button>
     </div>
 
     <div class="admin-sidebar-menu p-3">

@@ -16,8 +16,18 @@
 <body>
 
     <!-- Header Admin -->
+    <header class="admin-mobile-header">
+        <a href="{{ route('admin.dashboard') }}" class="admin-mobile-brand">
+            <img src="{{ asset('img/long-black-logo.png') }}" alt="Long Black">
+            <span>Long Black Admin</span>
+        </a>
+        <button class="admin-mobile-menu-btn" type="button" aria-label="Buka menu admin" aria-expanded="false" aria-controls="adminSidebar">
+            <i class="fa fa-bars"></i>
+        </button>
+    </header>
 
     <!-- Sidebar Admin -->
+    <div class="admin-sidebar-backdrop" data-admin-sidebar-close hidden></div>
     @include('partials.admin-sidebar')
 
     <main class="admin-main">
@@ -170,6 +180,48 @@
 
             form.reportValidity();
         }, true);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('adminSidebar');
+            const toggle = document.querySelector('.admin-mobile-menu-btn');
+            const backdrop = document.querySelector('[data-admin-sidebar-close]');
+            const closeButtons = document.querySelectorAll('[data-admin-sidebar-close]');
+
+            if (!sidebar || !toggle || !backdrop) {
+                return;
+            }
+
+            function setSidebar(open) {
+                sidebar.classList.toggle('is-open', open);
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                backdrop.hidden = !open;
+                document.body.classList.toggle('admin-menu-open', open);
+            }
+
+            toggle.addEventListener('click', function () {
+                setSidebar(!sidebar.classList.contains('is-open'));
+            });
+
+            closeButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    setSidebar(false);
+                });
+            });
+
+            sidebar.querySelectorAll('a.nav-link, .admin-sidebar-subitem').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    if (window.matchMedia('(max-width: 768px)').matches) {
+                        setSidebar(false);
+                    }
+                });
+            });
+
+            window.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    setSidebar(false);
+                }
+            });
+        });
     </script>
     @stack('scripts')
 </body>

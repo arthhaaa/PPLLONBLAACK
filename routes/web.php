@@ -62,6 +62,7 @@ Route::middleware('auth')
     // Orders & Tracking
     Route::get('/orders', [CustomerController::class, 'orders'])->name('orders');
     Route::get('/orders/{kodeTransaksi}', [CustomerController::class, 'showOrder'])->name('orders.show');
+    Route::get('/orders/{kodeTransaksi}/invoice', [CustomerController::class, 'invoice'])->name('orders.invoice');
     Route::put('/orders/{kodeTransaksi}', [CustomerController::class, 'updateOrder'])->name('orders.update');
     Route::post('/orders/{kodeTransaksi}/cancel', [CustomerController::class, 'cancelOrder'])->name('orders.cancel');
     Route::delete('/orders/{kodeTransaksi}', [CustomerController::class, 'hideOrder'])->name('orders.destroy');
@@ -103,6 +104,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Pesanan / Transaksi
     Route::get('/pesanan', [App\Http\Controllers\Admin\PemesananController::class, 'index'])->name('pesanan.index');
     Route::post('/pesanan/{pesanan}/status', [App\Http\Controllers\Admin\PemesananController::class, 'updateStatus'])->name('pesanan.status');
+    Route::get('/pesanan/{pesanan}/invoice', [App\Http\Controllers\Admin\PemesananController::class, 'invoice'])->name('pesanan.invoice');
 
     // Biaya Operasional
     Route::resource('biaya-operasional', BiayaOperasionalController::class)

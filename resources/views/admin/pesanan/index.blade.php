@@ -45,6 +45,7 @@
                             <th>Pembayaran</th>
                             <th>Status</th>
                             <th>Aksi Status</th>
+                            <th>Struk</th>
                             <th>Tanggal</th>
                         </tr>
                     </thead>
@@ -91,11 +92,16 @@
                                         <span class="text-muted small">Status final</span>
                                     @endif
                                 </td>
+                                <td>
+                                    <a href="{{ route('admin.pesanan.invoice', $order->id_pesanan) }}" target="_blank" class="btn btn-sm order-receipt-btn">
+                                        <i class="fa fa-receipt"></i> Struk
+                                    </a>
+                                </td>
                                 <td>{{ $order->created_at ? $order->created_at->format('d M Y H:i') : '-' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="text-center py-5 text-muted">
+                                <td colspan="11" class="text-center py-5 text-muted">
                                     Belum ada pesanan masuk.
                                 </td>
                             </tr>
@@ -206,6 +212,22 @@
 
     .status-form {
         min-width: 180px;
+    }
+
+    .order-receipt-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border-radius: 8px;
+        background: #4b2e2b;
+        color: #ffffff;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .order-receipt-btn:hover {
+        background: #b35c0c;
+        color: #ffffff;
     }
 </style>
 @endpush
