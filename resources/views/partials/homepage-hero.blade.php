@@ -51,7 +51,7 @@
                 </div>
             </div>
             <div class="profile-highlight-card">
-                <span class="lnr lnr-cup"></span>
+                <span class="lnr lnr-coffee-cup"></span>
                 <div>
                     <strong>Fresh & Siap Seduh</strong>
                     <p>Produk dipilih untuk pengalaman minum terbaik.</p>
